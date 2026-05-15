@@ -22,23 +22,23 @@
 (straight-use-package 'use-package)
 (straight-use-package 'transient)
 
-(defcustom emacs-solo-enable-preferred-font t
-           "Enable `emacs-solo-enable-preferred-font'."
+(defcustom my-enable-preferred-font t
+           "Enable `my-enable-preferred-font'."
            :type 'boolean
-           :group 'emacs-solo)
+           :group 'my)
 
-;; (defcustom emacs-solo-preferred-font-name "JetBrainsMono Nerd Font"
-;;(defcustom emacs-solo-preferred-font-name "Monaco"
-(defcustom emacs-solo-preferred-font-name "JetBrains Mono"
+;; (defcustom my-preferred-font-name "JetBrainsMono Nerd Font"
+;;(defcustom my-preferred-font-name "Monaco"
+(defcustom my-preferred-font-name "JetBrains Mono"
            "The name of the font to be used.
            Examples: `Maple Mono NF' or `JetBrainsMono Nerd Font'."
            :type 'string
-           :group 'emacs-solo)
+           :group 'my)
 
-(defcustom emacs-solo-preferred-font-sizes '(130 125)
+(defcustom my-preferred-font-sizes '(130 125)
            "List of default font sizes (first for macOS, second for GNU/Linux)."
            :type '(repeat integer)
-           :group 'emacs-solo)
+           :group 'my)
 
 (use-package emacs
   :ensure nil
@@ -156,23 +156,23 @@
   (load custom-file 'noerror 'nomessage)
   (modify-coding-system-alist 'file "" 'utf-8)
   ;; Setup preferred fonts when present on System
-  (declare-function emacs-solo/setup-font "")
-  (defun emacs-solo/setup-font ()
-    (let* ((emacs-solo-have-default-font (find-font (font-spec :family emacs-solo-preferred-font-name)))
+  (declare-function my/setup-font "")
+  (defun my/setup-font ()
+    (let* ((my-have-default-font (find-font (font-spec :family my-preferred-font-name)))
            (size (nth (if (eq system-type 'darwin) 0 1)
-                      emacs-solo-preferred-font-sizes))
+                      my-preferred-font-sizes))
            (chinese-font-name  "Microsoft YaHei UI"))
       (set-face-attribute 'default nil
-                          :family (when emacs-solo-have-default-font
-                                    emacs-solo-preferred-font-name)
+                          :family (when my-have-default-font
+                                    my-preferred-font-name)
                           :height size)
       (when (display-grayscale-p)
         (dolist (charset '(kana han symbol cjk-misc bopomofo))
           (set-fontset-font (frame-parameter nil 'font) charset (font-spec :family (eval chinese-font-name)))))))
 
   ;; Load Preferred Font Setup
-  (when emacs-solo-enable-preferred-font
-    (emacs-solo/setup-font))
+  (when my-enable-preferred-font
+    (my/setup-font))
 
   ;; We want auto-save, but no #file# cluterring, so everything goes under our config cache/
   (make-directory (expand-file-name "cache/auto-saves/" user-emacs-directory) t)
@@ -183,18 +183,18 @@
 
   :init
   ;; Keep margins from automatic resizing
-  (defun emacs-solo/set-default-window-margins ()
+  (defun my/set-default-window-margins ()
     "Set default left and right margins for all windows.
-    Unless the buffer uses `emacs-solo/center-document-mode`
+    Unless the buffer uses `my/center-document-mode`
     or is an ERC buffer."
     (interactive)
     (dolist (window (window-list))
       (with-current-buffer (window-buffer window)
-        (unless (or (bound-and-true-p emacs-solo/center-document-mode)
+        (unless (or (bound-and-true-p my/center-document-mode)
                     (derived-mode-p 'erc-mode))
           (set-window-margins window 0 0))))) ;; (LEFT RIGHT)
 
-  (add-hook 'window-configuration-change-hook #'emacs-solo/set-default-window-margins)
+  (add-hook 'window-configuration-change-hook #'my/set-default-window-margins)
 
   (tooltip-mode nil)
 
@@ -218,64 +218,45 @@
   (message (emacs-init-time)))
 
 (use-package eglot
-             :ensure nil
-             :custom
-             (eglot-autoshutdown t)
-             (eglot-events-buffer-size 0) ;; EMACS-31 -- do we still need it?
-             (eglot-events-buffer-config '(:size 0 :format full))
-             (eglot-prefer-plaintext nil)
-             (jsonrpc-event-hook nil)
-             (eglot-code-action-indications nil) ;; EMACS-31 -- annoying as hell
-             :init
-             (fset #'jsonrpc--log-event #'ignore)
+  :ensure nil
+  :custom
+  (eglot-autoshutdown t)
+  (eglot-events-buffer-size 0)
+  (eglot-events-buffer-config '(:size 0 :format full))
+  (eglot-prefer-plaintext nil)
+  (jsonrpc-event-hook nil)
+  (eglot-code-action-indications nil)
+  (eglot-report-progress nil)
+  :init
+  (fset #'jsonrpc--log-event #'ignore)
+  (setq-default eglot-workspace-configuration
+                '(:gopls (:hints (:parameterNames t))))
 
-             (setq-default eglot-workspace-configuration (quote
-                                                           (:gopls (:hints (:parameterNames t)))))
-             (setq eglot-report-progress nil)
+  (defun my/eglot-setup ()
+    "Setup eglot mode with specific exclusions."
+    (unless (memq major-mode '(emacs-lisp-mode lisp-mode))
+      (eglot-ensure)))
 
-             (defun emacs-solo/eglot-setup ()
-               "Setup eglot mode with specific exclusions."
-               (unless (memq major-mode '(emacs-lisp-mode lisp-mode))
-                 (eglot-ensure)))
-
-             (add-hook 'prog-mode-hook #'emacs-solo/eglot-setup)
-
-             (with-eval-after-load 'eglot
-                                   (add-to-list
-                                     'eglot-server-programs
-                                     '((ruby-mode ruby-ts-mode) "ruby-lsp")))
-
-             (with-eval-after-load 'eglot
-                                   (add-to-list
-                                     'eglot-server-programs
-                                     '((tsx-ts-mode typescript-ts-mode js-mode js-jsx-mode js-ts-mode)
-                                       . ("rass"
-                                          "--"
-                                          "typescript-language-server" "--stdio"
-                                          "--"
-                                          "eslint-lsp" "--stdio"
-                                          "--"
-                                          "tailwindcss-language-server" "--stdio"))))
-
-             (with-eval-after-load 'eglot
-                                   (add-to-list
-                                     'eglot-server-programs
-                                     '((clojure-mode clojurescript-mode) . ("clojure-lsp"))))
-             ;; (with-eval-after-load 'eglot
-             ;;   (add-to-list
-             ;;    'eglot-server-programs
-             ;;    '((java-mode java-ts-mode) . ("jdtls"
-             ;;                                  "-configuration" "/home/ronghusong/software/opensoft/jdtls/config_linux/"
-             ;;                                  "-data" "/home/ronghusong/.cache/jdtls/"))))
-             :bind (:map
-                     eglot-mode-map
-                     ("C-7" . eglot-find-declaration)
-                     ("C-8" . eglot-find-implementation)
-                     ("C-c l a" . eglot-code-actions)
-                     ("C-c l o" . eglot-code-action-organize-imports)
-                     ("C-c l r" . eglot-rename)
-                     ("C-c l i" . eglot-inlay-hints-mode)
-                     ("C-c l f" . eglot-format)))
+  (add-hook 'prog-mode-hook #'my/eglot-setup)
+  :config
+  (add-to-list 'eglot-server-programs
+               '((ruby-mode ruby-ts-mode) "ruby-lsp"))
+  (add-to-list 'eglot-server-programs
+               '((tsx-ts-mode typescript-ts-mode js-mode js-jsx-mode js-ts-mode)
+                 . ("rass"
+                    "--" "typescript-language-server" "--stdio"
+                    "--" "eslint-lsp" "--stdio"
+                    "--" "tailwindcss-language-server" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '((clojure-mode clojurescript-mode) . ("clojure-lsp")))
+  :bind (:map eglot-mode-map
+              ("C-7" . eglot-find-declaration)
+              ("C-8" . eglot-find-implementation)
+              ("C-c l a" . eglot-code-actions)
+              ("C-c l o" . eglot-code-action-organize-imports)
+              ("C-c l r" . eglot-rename)
+              ("C-c l i" . eglot-inlay-hints-mode)
+              ("C-c l f" . eglot-format)))
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (let ((default-directory (expand-file-name "site-lisp" user-emacs-directory)))
@@ -289,27 +270,27 @@
 (setenv "http_proxy"  "http://127.0.0.1:18080")
 (setenv "https_proxy" "http://127.0.0.1:18080")
 
+(require 'init-god-mode)
+(require 'init-eca)
 (require 'init-rime)
 (require 'init-tookit)
-(require 'init-eaf-config)
-(require 'init-fingertip)
 (require 'init-sort-tab)
-(require 'init-expand-region)
-(require 'init-toggle-one-window)
+(require 'init-eaf-config)
+(require 'init-eshell)
+(require 'init-translate)
 (require 'init-vertico)
 (require 'init-marginalia)
-(require 'init-consult)
-(require 'init-yasnippet)
-(require 'init-multiple-cursor)
-(require 'init-format)
-(require 'init-eshell)
-(require 'init-avy)
 (require 'init-corfu)
 (require 'init-orderless)
+(require 'init-consult)
+(require 'init-fingertip)
+(require 'init-format)
+(require 'init-multiple-cursor)
+(require 'init-expand-region)
+(require 'init-toggle-one-window)
+(require 'init-yasnippet)
+(require 'init-avy)
 (require 'init-eglot-java)
-(require 'init-eca)
-(require 'init-translate)
-(require 'init-god-mode)
 (require 'init-cider)
 
 (provide 'init)

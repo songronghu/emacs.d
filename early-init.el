@@ -1,7 +1,7 @@
 ;;; early-init.el --- Emacs Solo (no external packages) Configuration --- Early Init  -*- lexical-binding: t; -*-
 ;;
 ;; Author: Rahul Martim Juliato
-;; URL: https://github.com/LionyxML/emacs-solo
+;; URL: https://github.com/songronghu/emacs.d
 ;; Package-Requires: ((emacs "30.1"))
 ;; Keywords: config
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -12,7 +12,7 @@
 ;;
 
 ;;; Code:
-(defcustom emacs-solo-avoid-flash-options
+(defcustom my-avoid-flash-options
   '((enabled . t)
     (background . "#292D3E") ;; Catppuccin "#1e1e2e" or Crafters "#292D3E"
     (foreground . "#292D3E")
@@ -24,12 +24,12 @@
 - `reset-background`, `reset-foreground`: Optional explicit colors to restore after startup.
 
 NOTE: The default values here presented are set for the default
-`emacs-solo' custom theme.  If you'd like to turn this ON with another
+`my' custom theme.  If you'd like to turn this ON with another
 theme, change the background/foreground variables.
 
 If reset values are nil, nothing is reset."
   :type '(alist :key-type symbol :value-type (choice (const nil) string))
-  :group 'emacs-solo)
+  :group 'my)
 
 (setq package-enable-at-startup nil)
 
@@ -46,33 +46,39 @@ If reset values are nil, nothing is reset."
             (setq gc-cons-threshold (* 100 1024 1024)
                   gc-cons-percentage 0.1)))
 
+(setq load-prefer-newer t)
+
 ;; Single VC backend inscreases booting speed
 (setq vc-handled-backends '(Git))
+
+;; LSP performance
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
+(setq process-adaptive-read-buffering t)
 
 ;; Do not native compile if on battery power
 (setopt native-comp-async-on-battery-power nil) ; EMACS-31
 
 ;; HACK: avoid being flashbanged
-(defun emacs-solo/avoid-initial-flash-of-light ()
-  "Avoid flash of light when starting Emacs, based on `emacs-solo-avoid-flash-options`."
-  (when (alist-get 'enabled emacs-solo-avoid-flash-options)
+(defun my/avoid-initial-flash-of-light ()
+  "Avoid flash of light when starting Emacs, based on `my-avoid-flash-options`."
+  (when (alist-get 'enabled my-avoid-flash-options)
     (setq mode-line-format nil)
     (set-face-attribute 'default nil
-                        :background (alist-get 'background emacs-solo-avoid-flash-options)
-                        :foreground (alist-get 'foreground emacs-solo-avoid-flash-options))))
+                        :background (alist-get 'background my-avoid-flash-options)
+                        :foreground (alist-get 'foreground my-avoid-flash-options))))
 
-(defun emacs-solo/reset-default-colors ()
-  "Reset any explicitly defined reset values in `emacs-solo-avoid-flash-options`."
-  (when (alist-get 'enabled emacs-solo-avoid-flash-options)
-    (let ((bg (alist-get 'reset-background emacs-solo-avoid-flash-options))
-          (fg (alist-get 'reset-foreground emacs-solo-avoid-flash-options)))
+(defun my/reset-default-colors ()
+  "Reset any explicitly defined reset values in `my-avoid-flash-options`."
+  (when (alist-get 'enabled my-avoid-flash-options)
+    (let ((bg (alist-get 'reset-background my-avoid-flash-options))
+          (fg (alist-get 'reset-foreground my-avoid-flash-options)))
       (when bg
         (set-face-attribute 'default nil :background bg))
       (when fg
         (set-face-attribute 'default nil :foreground fg)))))
 
-(emacs-solo/avoid-initial-flash-of-light)
-(add-hook 'after-init-hook #'emacs-solo/reset-default-colors)
+(my/avoid-initial-flash-of-light)
+(add-hook 'after-init-hook #'my/reset-default-colors)
 
 ;; Always start Emacs and new frames maximized
 (add-to-list 'default-frame-alist '(fullscreen . maximized))

@@ -1,5 +1,5 @@
 (defvar my/eshell-where-file
-  "/home/ronghusong/src/github/emacs-solo/eshell/.where")
+  "/home/ronghusong/src/github/emacs.d/eshell/.where")
 
 (defvar my/eshell-where-cache '())
 (defvar my/eshell-where-dirty nil)

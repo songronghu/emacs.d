@@ -1,5 +1,5 @@
 ;;;###autoload
-(defun emacs-solo/google-translate-at-point-zh-en ()
+(defun my/google-translate-at-point-zh-en ()
   "Translate Chinese to English at point."
   (interactive)
   (let ((google-translate-default-source-language "zh-CN")
@@ -7,7 +7,7 @@
     (call-interactively 'google-translate-at-point)))
 
 ;;;###autoload
-(defun emacs-solo/google-translate-query-translate-zh-en ()
+(defun my/google-translate-query-translate-zh-en ()
   "Translate Chinese to English with query."
   (interactive)
   (let ((google-translate-default-source-language "zh-CN")
@@ -20,8 +20,8 @@
   ;; 绑定快捷键
   (bind-keys ("C-c t" . google-translate-at-point)
              ("C-c T" . google-translate-query-translate)
-             ("C-c c" . emacs-solo/google-translate-at-point-zh-en)
-             ("C-c C" . emacs-solo/google-translate-query-translate-zh-en))
+             ("C-c c" . my/google-translate-at-point-zh-en)
+             ("C-c C" . my/google-translate-query-translate-zh-en))
   :config
   ;; 必须引入默认 UI 模块，否则会报错
   ;;(require 'google-translate-default-ui)
