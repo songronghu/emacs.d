@@ -1,6 +1,5 @@
 (use-package rime
   :straight (rime :host github :repo "DogLooksGood/emacs-rime")
-  :after (dash)
   :init
   (setq rime-user-data-dir (expand-file-name "~/.config/fcitx/rime")
         default-input-method "rime"

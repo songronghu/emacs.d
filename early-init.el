@@ -1,40 +1,26 @@
-;;; early-init.el --- Emacs Solo (no external packages) Configuration --- Early Init  -*- lexical-binding: t; -*-
-;;
-;; Author: Rahul Martim Juliato
-;; URL: https://github.com/songronghu/emacs.d
-;; Package-Requires: ((emacs "30.1"))
-;; Keywords: config
-;; SPDX-License-Identifier: GPL-3.0-or-later
-;;
+;;; -------------------- PERFORMANCE & HACKS
+;; HACK: inscrease startup speed
 
-;;; Commentary:
-;;  Early init configuration for Emacs Solo
-;;
+(setq package-enable-at-startup nil)
 
-;;; Code:
-(defcustom my-avoid-flash-options
-  '((enabled . t)
-    (background . "#292D3E") ;; Catppuccin "#1e1e2e" or Crafters "#292D3E"
-    (foreground . "#292D3E")
-    (reset-background . "#292D3E")
-    (reset-foreground . "#EEFFFF")) ;; Catppuccin "#cdd6f4" or Crafters "#EEFFFF"
+(defcustom avoid-flash-options
+  '((enabled          . t)
+    (background       . "#2b313c")        ;; Catppuccin "#1e1e2e" / Crafters "#292D3E" / GITS #050810
+    (foreground       . "#d8dee9")
+    (reset-background . "#2b313c")
+    (reset-foreground . "#EEFFFF"))       ;; Catppuccin "#cdd6f4" / Crafters "#EEFFFF" / GITS #68b8cc
   "Options to avoid flash of light on Emacs startup.
 - `enabled`: Whether to apply the workaround.
 - `background`, `foreground`: Initial colors to use.
 - `reset-background`, `reset-foreground`: Optional explicit colors to restore after startup.
 
 NOTE: The default values here presented are set for the default
-`my' custom theme.  If you'd like to turn this ON with another
+`emacs-solo' custom theme.  If you'd like to turn this ON with another
 theme, change the background/foreground variables.
 
 If reset values are nil, nothing is reset."
   :type '(alist :key-type symbol :value-type (choice (const nil) string))
-  :group 'my)
-
-(setq package-enable-at-startup nil)
-
-;;; -------------------- PERFORMANCE & HACKS
-;; HACK: inscrease startup speed
+  :group 'emacs-solo)
 
 ;; Delay garbage collection while Emacs is booting
 (setq gc-cons-threshold most-positive-fixnum
@@ -48,37 +34,30 @@ If reset values are nil, nothing is reset."
 
 (setq load-prefer-newer t)
 
-;; Single VC backend inscreases booting speed
-(setq vc-handled-backends '(Git))
-
-;; LSP performance
-(setq read-process-output-max (* 1024 1024)) ;; 1mb
-(setq process-adaptive-read-buffering t)
-
 ;; Do not native compile if on battery power
 (setopt native-comp-async-on-battery-power nil) ; EMACS-31
 
 ;; HACK: avoid being flashbanged
-(defun my/avoid-initial-flash-of-light ()
-  "Avoid flash of light when starting Emacs, based on `my-avoid-flash-options`."
-  (when (alist-get 'enabled my-avoid-flash-options)
+(defun avoid-initial-flash-of-light ()
+  "Avoid flash of light when starting Emacs, based on `emacs-solo-avoid-flash-options`."
+  (when (alist-get 'enabled avoid-flash-options)
     (setq mode-line-format nil)
     (set-face-attribute 'default nil
-                        :background (alist-get 'background my-avoid-flash-options)
-                        :foreground (alist-get 'foreground my-avoid-flash-options))))
+                        :background (alist-get 'background avoid-flash-options)
+                        :foreground (alist-get 'foreground avoid-flash-options))))
 
-(defun my/reset-default-colors ()
-  "Reset any explicitly defined reset values in `my-avoid-flash-options`."
-  (when (alist-get 'enabled my-avoid-flash-options)
-    (let ((bg (alist-get 'reset-background my-avoid-flash-options))
-          (fg (alist-get 'reset-foreground my-avoid-flash-options)))
+(defun reset-default-colors ()
+  "Reset any explicitly defined reset values in `emacs-solo-avoid-flash-options`."
+  (when (alist-get 'enabled avoid-flash-options)
+    (let ((bg (alist-get 'reset-background avoid-flash-options))
+          (fg (alist-get 'reset-foreground avoid-flash-options)))
       (when bg
         (set-face-attribute 'default nil :background bg))
       (when fg
         (set-face-attribute 'default nil :foreground fg)))))
 
-(my/avoid-initial-flash-of-light)
-(add-hook 'after-init-hook #'my/reset-default-colors)
+(avoid-initial-flash-of-light)
+(add-hook 'after-init-hook #'reset-default-colors)
 
 ;; Always start Emacs and new frames maximized
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
@@ -91,10 +70,7 @@ If reset values are nil, nothing is reset."
         (let ((project (project-current)))
           (if project
               (concat "Emacs - [p] " (project-name project))
-              (concat "Emacs - " (buffer-name))))))
-
-(when (eq system-type 'darwin)
-  (setq ns-use-proxy-icon nil))
+            (concat "Emacs - " (buffer-name))))))
 
 (setq inhibit-compacting-font-caches t)
 
@@ -104,11 +80,3 @@ If reset values are nil, nothing is reset."
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (fboundp 'tooltip-mode) (tooltip-mode -1))
 (if (fboundp 'fringe-mode) (fringe-mode -1))
-
-;; Avoid raising the *Messages* buffer if anything is still without
-;; lexical bindings
-(setq warning-minimum-level :error)
-(setq warning-suppress-types '((lexical-binding)))
-
-(provide 'early-init)
-;;; early-init.el ends here

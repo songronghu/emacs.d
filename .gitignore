@@ -16,7 +16,7 @@
 !/tree-sitter/bin/
 gnus.el
 history
-custom-vars.el
+custom.el
 .gnus.el
 .newsrc
 .newsrc-dribble

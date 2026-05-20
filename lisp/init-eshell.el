@@ -93,12 +93,12 @@
           (term-send-raw-string (format "ssh %s\n" host)))))))
 
 ;; 初始化加载
-(my/eshell--load-where)
-
-;; 运行 30 秒空闲时才写入磁盘，避免高频操作
-(run-with-idle-timer 30 t #'my/eshell--save-where)
+(run-with-idle-timer 5 t #'my/eshell--load-where)
 
 (with-eval-after-load 'eshell
+  ;; 运行 30 秒空闲时才写入磁盘，避免高频操作
+  (run-with-idle-timer 30 t #'my/eshell--save-where)
+
   ;; 拦截 cd 命令
   (advice-add 'eshell/cd :around #'my/eshell-smart-cd)
 

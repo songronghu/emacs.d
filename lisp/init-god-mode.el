@@ -134,7 +134,7 @@ speed and independent command history.。"
     (when (bound-and-true-p god-local-mode)
       (god-local-mode 0)
       (incarnate-mode 1)
-      (set-cursor-color "black")
+      (set-cursor-color "red")
       (setq cursor-type 'bar)))
 
   (define-minor-mode incarnate-mode
