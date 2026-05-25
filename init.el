@@ -62,8 +62,7 @@ Changes take effect after restarting Emacs."
     (auto-saves                  . "auto-saves/")
     (auto-saves-sessions         . "auto-saves/sessions/")
     (multisession-directory      . "multisession/")
-    (undo-fu-session             . "undo-fu-session")
-    (yt-subs                     . "yt-subs"))
+    (undo-fu-session             . "undo-fu-session"))
   "Alist of (KEY . RELATIVE-PATH) for cache locations.
 RELATIVE-PATH is resolved against `my-cache-directory'.
 A trailing slash on RELATIVE-PATH marks the entry as a directory.")
@@ -105,9 +104,18 @@ parent directory created."
   (add-to-list 'savehist-additional-variables 'global-mark-ring))
 
 (use-package repeat
+  :ensure nil
   :defer 10
-  :init
+  :config
   (repeat-mode +1))
+
+(use-package devil
+  :straight t
+  :demand t
+  :bind ("<xf86back>" . keyboard-escape-quit)
+  :config
+  (global-devil-mode 1)
+  (setq overriding-text-conversion-style nil))
 
 ;;; MY STUFF
 (use-package custom-variables
@@ -175,7 +183,6 @@ If no binding is captured section of regex is found for a BINDING an error is si
          ("C-M-;"   . negative-argument)
          ("C-g"     . my/keyboard-quit-only-if-no-macro)
          ("M-o" . other-window)
-         ("M-j" . duplicate-dwim)
          ("M-g r" . recentf)
          )
   :config
@@ -288,6 +295,127 @@ If no binding is captured section of regex is found for a BINDING an error is si
   (transient-values-file (my--cache-path 'transient-values-file))
   (setopt tramp-persistency-file-name (my--cache-path 'tramp-persistency-file-name)))
 
+(use-package dired
+  :ensure nil
+  :config
+  ;; dired - reuse current buffer by pressing 'a'
+  (put 'dired-find-alternate-file 'disabled nil)
+
+  ;; always delete and copy recursively
+  (setq dired-recursive-deletes 'always)
+  (setq dired-recursive-copies 'always)
+
+  ;; if there is a dired buffer displayed in the next window, use its
+  ;; current subdir, instead of the current subdir of this dired buffer
+  (setq dired-dwim-target t)
+
+  ;; drag files from dired to other apps
+  (setq dired-mouse-drag-files t)
+
+  ;; enable some really cool extensions like C-x C-j(dired-jump)
+  (require 'dired-x))
+
+;;; General Key Bindings
+(use-package crux
+  :straight t
+  :bind (("C-c o" . crux-open-with)
+	 ("C-a" . crux-move-beginning-of-line)
+         ("C-l" . crux-smart-open-line)
+         ("C-c n" . crux-cleanup-buffer-or-region)
+         ("C-c f" . crux-recentf-find-file)
+         ("C-M-z" . crux-indent-defun)
+         ("C-c u" . crux-view-url)
+         ("C-c e" . crux-eval-and-replace)
+	 ("C-x w v" . crux-swap-windows)
+         ("C-c D" . crux-delete-file-and-buffer)
+         ("C-c r" . crux-rename-buffer-and-file)
+         ("C-c r" . crux-rename-file-and-buffer)
+	 ("C-c t" . crux-visit-term-buffer)
+	 ("C-c k" . crux-kill-other-buffers)
+	 ("C-c TAB" . crux-indent-rigidly-and-copy-to-clipboard)
+	 ("C-c I" . crux-find-user-init-file)
+	 ("C-c S" . crux-find-shell-init-file)
+	 ("s-r" . crux-recentf-find-file)
+	 ("s-j" . crux-top-join-line)
+	 ("C-^" . crux-top-join-line)
+	 ("C-k" . crux-kill-whole-line)
+	 ("C-<backspace>" . crux-kill-line-backwards)
+	 ("C-o" . crux-smart-open-line-above)
+	 ([remap move-beginning-of-line] . crux-move-beginning-of-line)
+         ([(shift return)] . crux-smart-open-line)
+         ([(control shift return)] . crux-smart-open-line-above)
+         ([remap kill-whole-line] . crux-kill-whole-line)
+	 ("C-c s" . crux-ispell-word-then-abbrev)
+	 ("C-x B"   . my/org-scratch)
+	 ("M-j" . crux-duplicate-current-line-or-region)
+	 ("C-c ;" . crux-duplicate-and-comment-current-line-or-region))
+  :config
+  (defun my/org-scratch ()
+    (interactive)
+    (let ((initial-major-mode 'org-mode))
+      (crux-create-scratch-buffer)))
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map (kbd "O") #'crux-open-with)))
+
+;; diff-hl - highlight uncommitted changes in the fringe
+(use-package diff-hl
+  :straight (diff-hl :host github :repo "dgutov/diff-hl")
+  :config
+  (global-diff-hl-mode +1)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
+
+;; diminish - hide minor modes from the mode line
+(use-package diminish
+  :straight (diminish :type git :host github :repo "emacsmirror/diminish")
+  :init
+  :config
+  (diminish 'abbrev-mode)
+  (diminish 'flyspell-mode)
+  (diminish 'flyspell-prog-mode)
+  (diminish 'eldoc-mode))
+
+;; paredit - structural editing for s-expressions
+(use-package paredit
+  :straight (paredit :host github :repo "emacsmirror/paredit")
+  :config
+  ;; paredit steals RET for auto-newline-and-indent, which is annoying
+  (define-key paredit-mode-map (kbd "RET") nil)
+  (define-key paredit-mode-map (kbd ";") nil)
+  (add-hook 'paredit-mode-hook (lambda () (electric-pair-local-mode -1)))
+  (add-hook 'emacs-lisp-mode-hook #'paredit-mode)
+  ;; enable in the *scratch* buffer
+  (add-hook 'lisp-interaction-mode-hook #'paredit-mode)
+  (add-hook 'ielm-mode-hook #'paredit-mode)
+  (add-hook 'lisp-mode-hook #'paredit-mode)
+  (add-hook 'eval-expression-minibuffer-setup-hook #'paredit-mode)
+  (diminish 'paredit-mode "()"))
+
+;; anzu - show total search matches and current position in mode line
+(use-package anzu
+  :straight (anzu :host github :repo "emacsorphanage/anzu")
+  :bind (("M-%" . anzu-query-replace)
+         ("C-M-%" . anzu-query-replace-regexp))
+  :config
+  (global-anzu-mode))
+
+;; easy-kill - enhanced M-w with easy selection of nearby things
+(use-package easy-kill
+  :straight t
+  :config
+  (global-set-key [remap kill-ring-save] 'easy-kill))
+
+;; rainbow-delimiters - colorize nested parentheses by depth
+(use-package rainbow-delimiters 
+  :straight (rainbow-delimiters :host github :repo "Fanael/rainbow-delimiters")
+  :defer t)
+
+;; rainbow-mode - colorize color strings like #ff0000 and rgb(...)
+(use-package rainbow-mode
+  :straight (rainbow-mode :host github :repo "emacs-straight/rainbow-mode")
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-mode)
+  (diminish 'rainbow-mode))
+
 (use-package font-setup 
   :ensure nil 
   :no-require t
@@ -350,8 +478,7 @@ If no binding is captured section of regex is found for a BINDING an error is si
         modus-themes-variable-pitch-ui nil
         modus-themes-custom-auto-reload t)
 
-  :config
-  ;; 更接近 Ubuntu/Yaru Dark
+  ;; more closer Ubuntu/Yaru Dark
   (setq modus-vivendi-palette-overrides
         '((bg-main "#2b313c")
           (bg-dim "#232831")
@@ -471,8 +598,8 @@ If no binding is captured section of regex is found for a BINDING an error is si
     (interactive)
     (insert (consult--read
              (consult--process-collection
-	      (lambda (input)
-                (list "qalc" "-t" (string-trim input))))
+		 (lambda (input)
+                   (list "qalc" "-t" (string-trim input))))
              :prompt "run qalc: "))))
 
 (use-package consult-dir
@@ -638,7 +765,7 @@ If given, use INITIAL as the starting point of the query."
 ;;; Server Setup
 (use-package server
   :ensure nil
-  :defer t
+  :init
   :config
   (unless (server-running-p)
     (server-start)))
@@ -655,14 +782,37 @@ If given, use INITIAL as the starting point of the query."
 (setenv "http_proxy"  "http://127.0.0.1:18080")
 (setenv "https_proxy" "http://127.0.0.1:18080")
 
+(use-package elisp-mode
+  :ensure nil ; not a real package
+  :config
+  (defun bozhidar-visit-ielm ()
+    "Switch to default `ielm' buffer.
+Start `ielm' if it's not already running."
+    (interactive)
+    (require 'crux)
+    (crux-start-or-switch-to 'ielm "*ielm*"))
+
+  (add-hook 'emacs-lisp-mode-hook #'rainbow-delimiters-mode)
+  (define-key emacs-lisp-mode-map (kbd "C-c C-z") #'bozhidar-visit-ielm)
+  (define-key emacs-lisp-mode-map (kbd "C-c C-c") #'eval-defun)
+  (define-key emacs-lisp-mode-map (kbd "C-c C-b") #'eval-buffer))
+
 (use-package cider
   :straight t
   :config
-  (setq cider-repl-display-help-banner nil)
-  (setq cider-repl-pop-to-buffer-on-connect 'display-only)
-  (setq cider-show-error-buffer t)
-  (setq cider-auto-select-error-buffer t)
-  (setq cider-reuse-dead-repls t))
+  ;; log nREPL messages for debugging connection issues
+  (setq nrepl-log-messages t)
+  ;; auto-download Java sources for navigation/documentation
+  (setq cider-download-java-sources t)
+  (add-hook 'cider-repl-mode-hook #'paredit-mode)
+  (add-hook 'cider-repl-mode-hook #'rainbow-delimiters-mode))
+
+;;A minimalist Clojure interactive programming environment for Emacs
+(use-package port
+  :straight (port :type git :host github :repo "clojure-emacs/port"
+                  :files ("lisp/*.el"))
+  :hook ((clojure-mode    . port-mode)
+         (clojure-ts-mode . port-mode)))
 
 (use-package block-nav
   :straight (block-nav :type git :host github :repo "nixin72/block-nav.el")
@@ -674,10 +824,14 @@ If given, use INITIAL as the starting point of the query."
 (use-package avy
   :straight (avy :host github :repo "abo-abo/avy")
   :defer t
-  :bind (
-         ("s-d" . avy-goto-char)
-         ("s-j" . avy-goto-word-1)
-         ))
+  :bind (("s-." . avy-goto-word-or-subword-1)
+         ("s-," . avy-goto-char)
+         ("C-c ." . avy-goto-word-or-subword-1)
+         ("C-c ," . avy-goto-char)
+         ("M-g l" . avy-goto-line)
+         ("M-g w" . avy-goto-word-or-subword-1))
+  :config
+  (setq avy-background t))
 
 (use-package eca
   :straight (eca :host github :repo "editor-code-assistant/eca-emacs")
@@ -728,8 +882,8 @@ If given, use INITIAL as the starting point of the query."
 (require 'init-eaf)
 (require 'init-eshell)
 (require 'init-translate)
-(require 'init-fingertip)
-(require 'init-format)
+;; (require 'init-fingertip)
+;; (require 'init-format)
 (require 'init-eglot-java)
 
 (provide 'init)

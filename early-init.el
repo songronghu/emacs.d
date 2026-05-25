@@ -14,13 +14,12 @@
 - `background`, `foreground`: Initial colors to use.
 - `reset-background`, `reset-foreground`: Optional explicit colors to restore after startup.
 
-NOTE: The default values here presented are set for the default
-`emacs-solo' custom theme.  If you'd like to turn this ON with another
+NOTE: The default values here presented are set for the default custom theme.  If you'd like to turn this ON with another
 theme, change the background/foreground variables.
 
 If reset values are nil, nothing is reset."
   :type '(alist :key-type symbol :value-type (choice (const nil) string))
-  :group 'emacs-solo)
+  :group 'my)
 
 ;; Delay garbage collection while Emacs is booting
 (setq gc-cons-threshold most-positive-fixnum
@@ -39,7 +38,7 @@ If reset values are nil, nothing is reset."
 
 ;; HACK: avoid being flashbanged
 (defun avoid-initial-flash-of-light ()
-  "Avoid flash of light when starting Emacs, based on `emacs-solo-avoid-flash-options`."
+  "Avoid flash of light when starting Emacs, based on `avoid-flash-options`."
   (when (alist-get 'enabled avoid-flash-options)
     (setq mode-line-format nil)
     (set-face-attribute 'default nil
@@ -47,7 +46,7 @@ If reset values are nil, nothing is reset."
                         :foreground (alist-get 'foreground avoid-flash-options))))
 
 (defun reset-default-colors ()
-  "Reset any explicitly defined reset values in `emacs-solo-avoid-flash-options`."
+  "Reset any explicitly defined reset values in `avoid-flash-options`."
   (when (alist-get 'enabled avoid-flash-options)
     (let ((bg (alist-get 'reset-background avoid-flash-options))
           (fg (alist-get 'reset-foreground avoid-flash-options)))
