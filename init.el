@@ -184,6 +184,8 @@ If no binding is captured section of regex is found for a BINDING an error is si
          ("C-g"     . my/keyboard-quit-only-if-no-macro)
          ("M-o" . other-window)
          ("M-g r" . recentf)
+	 ("M-g e" . eshell)
+	 ("s-f" . dirvish)
          )
   :config
   ;; According to the POSIX, a line is defined as "a sequence of zero or
@@ -468,7 +470,6 @@ If no binding is captured section of regex is found for a BINDING an error is si
 ;;   :straight t
 ;;   :config
 ;; (load-theme 'doom-one t))
-
 (use-package modus-themes
   :straight t
   :init
@@ -514,7 +515,6 @@ If no binding is captured section of regex is found for a BINDING an error is si
 ;;   ;; `modus-themes-load-random', `modus-themes-load-random-dark',
 ;;   ;; `modus-themes-load-random-light').
 ;;   (modus-themes-load-theme 'ef-summer))
-
 (use-package spacious-padding
   :straight t
   :hook (after-init . spacious-padding-mode)
@@ -875,6 +875,28 @@ Start `ielm' if it's not already running."
   :straight (yasnippet :host github :repo "joaotavora/yasnippet")
   :config
   (yas-global-mode 1))
+
+(use-package dirvish			
+  :straight (dirvish :host github :repo "alexluigit/dirvish")
+  :config
+  (dirvish-override-dired-mode 1)
+  (setq dired-listing-switches "-Alho --group-directories-first")
+  ;; bind hjkl
+  (define-key dired-mode-map (kbd "h") 'dired-up-directory)      
+  (define-key dired-mode-map (kbd "j") 'dired-next-line)         
+  (define-key dired-mode-map (kbd "k") 'dired-previous-line)     
+  (define-key dired-mode-map (kbd "l") 'dired-find-file)
+
+  (define-key dired-mode-map (kbd "J")
+    (lambda () (interactive) (goto-char (point-max)) (dired-previous-line 1)))
+  (define-key dired-mode-map (kbd "K")
+    (lambda () (interactive) (goto-char (point-min))))
+  
+  (define-key dired-mode-map (kbd "n") 'dired-create-empty-file)
+  (define-key dired-mode-map (kbd "N") 'dired-create-directory)
+    
+  ;; l bind to dired-do-redisplay before，now bind to r
+  (define-key dired-mode-map (kbd "r") 'dired-do-redisplay))
 
 (require 'init-rime)
 (require 'init-tookit)

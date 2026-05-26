@@ -35,4 +35,6 @@ eaf/*
 eca/*
 eglot-java-eclipse-jdt-cache/*
 straight/*
+dirvish/*
 AGENTS.md
+.mc-lists.el

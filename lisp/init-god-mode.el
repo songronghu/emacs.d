@@ -141,7 +141,7 @@ speed and independent command history.。"
     "As normal but toggle to God mode on RET"
     :lighter " God-Inc"
     :keymap (let ((map (make-sparse-keymap)))
-              (define-key map (kbd "<return>") 'unincarnate)
+              (define-key map (kbd "S-<return>") 'unincarnate)
               map))
 
   (defun type-something-quickly ()
@@ -155,8 +155,7 @@ speed and independent command history.。"
         (type-something-quickly)
       (incarnate)))
 
-  (define-key incarnate-mode-map (kbd "S-<return>") 'newline-and-indent)
-
+  ;; (define-key incarnate-mode-map (kbd "S-<return>") 'newline-and-indent)
   (define-key ctl-x-map (kbd "C-b") 'consult-buffer)
 
   (define-key god-local-mode-map (kbd "n") #'my-god-next-line)
