@@ -192,6 +192,14 @@ If no binding is captured section of regex is found for a BINDING an error is si
   ;; more non-newline characters followed by a terminating newline".
   (setopt require-final-newline t)
   (setopt kill-region-dwim 'emacs-word)
+  (defun my-pulse-on-nav (&rest _)
+    (require 'pulse)
+    (let ((bounds (bounds-of-thing-at-point 'word)))
+      (if bounds
+	  ;; If there is a word at the cursor, only flash the word area
+          (pulse-momentary-highlight-region (car bounds) (cdr bounds))
+	;; If the cursor is blank or has a newline character (word boundary cannot be found), the current line will be downgraded and flashed to avoid unresponsiveness.
+	(pulse-momentary-highlight-one-line (point)))))
   (defun my/keyboard-quit-only-if-no-macro ()
     "A workaround to let me accidently hit C-g while recording a macro"
     (interactive)
@@ -201,7 +209,14 @@ If no binding is captured section of regex is found for a BINDING an error is si
               (deactivate-mark)
             (message "Macro running. Can't quit.")))
       (keyboard-quit)))
-
+  (advice-add 'pop-to-mark-command :after #'my-pulse-on-nav)
+  (advice-add 'pop-global-mark :after #'my-pulse-on-nav)
+  ;; Configure the flashing color of pulse
+  (with-eval-after-load 'pulse
+    (set-face-attribute 'pulse-highlight-start-face nil 
+                        :background "#f1fa8c"   
+                        :weight 'bold))        
+    
   ;; Set the title of the frame to the current file - Emacs
   (setq-default frame-title-format '("%b - Emacs"))
 
@@ -582,6 +597,8 @@ If no binding is captured section of regex is found for a BINDING an error is si
          ("M-s f"       . consult-find)
          ("M-s M-f"     . consult-find)
          ("C-x C-SPC"   . consult-global-mark)
+         ("M-G"   . consult-global-mark)
+         ("C-i"   . pop-to-mark-command)
          ("C-x M-:"     . consult-complex-command)
          ("C-c n"       . consult-org-agenda)
          ("M-X"         . consult-mode-command)
@@ -593,6 +610,9 @@ If no binding is captured section of regex is found for a BINDING an error is si
   :custom
   (completion-in-region-function #'consult-completion-in-region)
   :config
+  ;; 1. Expand the capacity of the marking ring (the default is 16, changing it to 64 is more convenient)
+  (setq mark-ring-max 64)
+  (setq global-mark-ring-max 64)
   (recentf-mode t)
   (defun my/quick-calc ()
     (interactive)

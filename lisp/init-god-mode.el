@@ -6,80 +6,11 @@
 ;; a global minor mode for Emacs that provides a vi-like modal editing experience.
 
 ;;; Code:
-
 (use-package god-mode
   :straight (god-mode :host github :repo "emacsorphanage/god-mode")
   :config
   (setq god-exempt-major-modes nil)
   (setq god-exempt-predicates nil)
-
-  (defvar my-god-scroll-count 1
-    "Current number of accelerated scrolling steps。")
-
-  (defvar my-god-last-command-time 0.0
-    "The time when the acceleration movement command was last executed。")
-
-  (defvar my-god-last-accel-cmd nil
-    "Independently record the last movement direction to avoid being
-intercepted by the bottom layer of Viper。")
-
-  (defun my-god--accelerated-step (current-cmd)
-    "Dynamically calculate scroll steps based on consecutive keystroke
-speed and independent command history.。"
-    (let* ((now (float-time))
-           (delta (- now my-god-last-command-time)))
-      ;; 1. Determine whether they are consecutive in the same direction (eq current-cmd my-viper-last-accel-cmd)
-      ;; 2. The time difference is relaxed to 0.35 seconds, which is enough to cover the initial delay of human manual double press and system long press
-      (if (and (eq current-cmd my-god-last-accel-cmd)
-               (< delta 0.18))
-          (setq my-god-scroll-count (min (+ my-god-scroll-count 1) 8))
-        ;; If direction changes or pauses for too long, reset to 1.
-        (setq my-god-scroll-count 1))
-      ;; update state record
-      (setq my-god-last-command-time now)
-      (setq my-god-last-accel-cmd current-cmd)
-      my-god-scroll-count))
-
-  (defun my-god-next-line (&optional arg)
-    "move down，Supports prefix parameters and continuous key acceleration。"
-    (interactive "p")
-    (if current-prefix-arg
-        (progn
-          ;; If a numeric prefix is ​​used（eg: 5j），Actively clear our acceleration pool records
-          (setq my-god-last-accel-cmd nil)
-          (next-line arg))
-      ;; pass 'j to get the number of acceleration steps
-      (next-line (my-god--accelerated-step 'j))))
-
-  (defun my-god-previous-line (&optional arg)
-    "move up，Supports prefix parameters and continuous key acceleration。"
-    (interactive "p")
-    (if current-prefix-arg
-        (progn
-          (setq my-god-last-accel-cmd nil)
-          (previous-line arg))
-      ;; pass 'k to get the number of acceleration steps.
-      (previous-line (my-god--accelerated-step 'k))))
-
-  (defun my-god-backward-char (&optional arg)
-    "move left，Supports prefix parameters and continuous key acceleration。"
-    (interactive "p")
-    (if current-prefix-arg
-        (progn
-          (setq my-god-last-accel-cmd nil)
-          (backward-char arg))
-      ;; pass 'h to get the number of acceleration steps.
-      (backward-char (my-god--accelerated-step 'h))))
-
-  (defun my-god-forward-char (&optional arg)
-    "move right，Supports prefix parameters and continuous key acceleration。"
-    (interactive "p")
-    (if current-prefix-arg
-        (progn
-          (setq my-god-last-accel-cmd nil)
-          (forward-char arg))
-      ;; pass 'l to get the number of acceleration steps.
-      (forward-char (my-god--accelerated-step 'l))))
 
   ;; cursor type
   (defun my-god-mode-update-cursor-type ()
@@ -110,7 +41,7 @@ speed and independent command history.。"
   (defun spacer (times)  (interactive "p") (dotimes (x times) (insert " ")))
 
   ;; h as backspace key
-  (define-key god-local-mode-map (kbd "h") 'my-dumb-del)
+  (define-key god-local-mode-map (kbd "A") 'my-dumb-del)
 
   (defun my-dumb-del ()
     (interactive)
@@ -155,13 +86,24 @@ speed and independent command history.。"
         (type-something-quickly)
       (incarnate)))
 
+  (defun my-move-to-window-top ()
+    (interactive)
+    (move-to-window-line 0))
+
+  (defun my-move-to-window-bottom ()
+    (interactive)
+    (move-to-window-line -1))
+
   ;; (define-key incarnate-mode-map (kbd "S-<return>") 'newline-and-indent)
   (define-key ctl-x-map (kbd "C-b") 'consult-buffer)
 
-  (define-key god-local-mode-map (kbd "n") #'my-god-next-line)
-  (define-key god-local-mode-map (kbd "p") #'my-god-previous-line)
-  (define-key god-local-mode-map (kbd "b") #'my-god-backward-char)
-  (define-key god-local-mode-map (kbd "f") #'my-god-forward-char)
+  (define-key god-local-mode-map (kbd "j") 'next-line)
+  (define-key god-local-mode-map (kbd "k") 'previous-line)
+  (define-key god-local-mode-map (kbd "h") (lambda () (interactive) (forward-symbol -1)))
+  (define-key god-local-mode-map (kbd "l") #'forward-symbol)
+
+  (define-key god-local-mode-map (kbd "N") #'my-move-to-window-top)
+  (define-key god-local-mode-map (kbd "M") #'my-move-to-window-bottom)
 
   ;; block-nav
   (define-key god-local-mode-map (kbd "J")  'block-nav-next-block)
