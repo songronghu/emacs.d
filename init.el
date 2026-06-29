@@ -185,7 +185,7 @@ If no binding is captured section of regex is found for a BINDING an error is si
          ("M-o" . other-window)
          ("M-g r" . recentf)
 	 ("M-g e" . eshell)
-	 ("s-f" . dirvish)
+	 ;;("s-f" . dirvish)
          )
   :config
   ;; According to the POSIX, a line is defined as "a sequence of zero or
@@ -240,6 +240,12 @@ If no binding is captured section of regex is found for a BINDING an error is si
   (setopt bidi-inhibit-bpa t)
   (global-so-long-mode 1)
 
+  ;; Disable Linux Primary selection synchronization
+  (setq select-enable-primary nil)
+  (setq save-interprogram-paste-before-kill t)
+  (setq select-active-regions nil)
+  (delete-selection-mode 1)
+  
   (setopt history-length 1000
           use-dialog-box nil
           delete-by-moving-to-trash t
@@ -395,7 +401,6 @@ If no binding is captured section of regex is found for a BINDING an error is si
 (use-package paredit
   :straight (paredit :host github :repo "emacsmirror/paredit")
   :config
-  ;; paredit steals RET for auto-newline-and-indent, which is annoying
   (define-key paredit-mode-map (kbd "RET") nil)
   (define-key paredit-mode-map (kbd ";") nil)
   (add-hook 'paredit-mode-hook (lambda () (electric-pair-local-mode -1)))
@@ -404,6 +409,8 @@ If no binding is captured section of regex is found for a BINDING an error is si
   (add-hook 'lisp-interaction-mode-hook #'paredit-mode)
   (add-hook 'ielm-mode-hook #'paredit-mode)
   (add-hook 'lisp-mode-hook #'paredit-mode)
+  (add-hook 'clojure-mode-hook #'paredit-mode)
+  (add-hook 'clojurescript-mode-hook #'paredit-mode)
   (add-hook 'eval-expression-minibuffer-setup-hook #'paredit-mode)
   (diminish 'paredit-mode "()"))
 
@@ -828,11 +835,11 @@ Start `ielm' if it's not already running."
   (add-hook 'cider-repl-mode-hook #'rainbow-delimiters-mode))
 
 ;;A minimalist Clojure interactive programming environment for Emacs
-(use-package port
-  :straight (port :type git :host github :repo "clojure-emacs/port"
-                  :files ("lisp/*.el"))
-  :hook ((clojure-mode    . port-mode)
-         (clojure-ts-mode . port-mode)))
+;; (use-package port
+;;   :straight (port :type git :host github :repo "clojure-emacs/port"
+;;                   :files ("lisp/*.el"))
+;;   :hook ((clojure-mode    . port-mode)
+;;          (clojure-ts-mode . port-mode)))
 
 (use-package block-nav
   :straight (block-nav :type git :host github :repo "nixin72/block-nav.el")
@@ -914,8 +921,12 @@ Start `ielm' if it's not already running."
   
   (define-key dired-mode-map (kbd "n") 'dired-create-empty-file)
   (define-key dired-mode-map (kbd "N") 'dired-create-directory)
-    
-  ;; l bind to dired-do-redisplay before，now bind to r
+
+  ;; Preview text page up and down
+  (define-key dired-mode-map (kbd "M-,") 'scroll-other-window-down)
+  (define-key dired-mode-map (kbd "M-.") 'scroll-other-window)
+  
+   ;; l bind to dired-do-redisplay before，now bind to r
   (define-key dired-mode-map (kbd "r") 'dired-do-redisplay))
 
 (require 'init-rime)
@@ -924,8 +935,6 @@ Start `ielm' if it's not already running."
 (require 'init-eaf)
 (require 'init-eshell)
 (require 'init-translate)
-;; (require 'init-fingertip)
 ;; (require 'init-format)
 (require 'init-eglot-java)
-
 (provide 'init)

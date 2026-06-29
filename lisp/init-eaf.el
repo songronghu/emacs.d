@@ -1,6 +1,6 @@
 (use-package eaf
   :bind (("s-w" . my/bm)
-         ;; ("s-f" . my/fm)
+         ("s-f" . my/fm)
          ("s-g" . my/gm)
          ("s-n" . my/pdf)
          ("s-b" . my/eaf-save-bookmark))

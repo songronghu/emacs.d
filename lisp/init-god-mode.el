@@ -40,7 +40,7 @@
 
   (defun spacer (times)  (interactive "p") (dotimes (x times) (insert " ")))
 
-  ;; h as backspace key
+  ;; A as backspace key
   (define-key god-local-mode-map (kbd "A") 'my-dumb-del)
 
   (defun my-dumb-del ()
@@ -99,8 +99,8 @@
 
   (define-key god-local-mode-map (kbd "j") 'next-line)
   (define-key god-local-mode-map (kbd "k") 'previous-line)
-  (define-key god-local-mode-map (kbd "h") (lambda () (interactive) (forward-symbol -1)))
-  (define-key god-local-mode-map (kbd "l") #'forward-symbol)
+  (define-key god-local-mode-map (kbd "h") (lambda () (interactive) (forward-word -1)))
+  (define-key god-local-mode-map (kbd "l") #'forward-word)
 
   (define-key god-local-mode-map (kbd "N") #'my-move-to-window-top)
   (define-key god-local-mode-map (kbd "M") #'my-move-to-window-bottom)
